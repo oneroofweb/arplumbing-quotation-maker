@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quotation Maker</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    body {
+      background: #f8f9fa;
+    }
+
+    .quotation-box {
+      background: #fff;
+      padding: 30px;
+      max-width: 900px;
+      margin: 20px auto;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .grand-total {
+      font-size: 18px;
+      font-weight: bold;
+      text-align: right;
+    }
+
+    .signature {
+      margin-top: 60px;
+      text-align: right;
+    }
+
+    .signature-line {
+      margin-top: 50px;
+      border-top: 1px solid #000;
+      width: 200px;
+      margin-left: auto;
+    }
+    
+    .remove-btn-table {
+      margin-left: 10px;
+    }
+
+    /* Table styling */
+    #productTable {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    #productTable th,
+    #productTable td {
+      border: 1px solid #000;
+      padding: 8px;
+      vertical-align: middle;
+    }
+
+    #productTable tbody tr.section-heading td {
+      background: #f1f1f1;
+      font-weight: bold;
+    }
+
+    /* === CSS FOR SUBJECT/CONTENT SECTION === */
+    .subject-section {
+      position: relative;
+      border-radius: 5px;
+      padding-top: 40px;
+      margin-bottom: 0px;
+    }
+
+    .remove-subject-btn {
+      position: absolute;
+      top: -13px;
+      right: 5px;
+    }
+    
+    .removable-part {
+        position: relative;
+        margin-bottom: 5px;
+    }
+    
+    .removable-part .remove-part-btn {
+        position: absolute;
+        top: 50%;
+        right: 0px;
+        transform: translateY(-50%);
+        padding: 0 5px;
+        line-height: 1.2;
+        border: none;
+    }
+
+    .removable-part [contenteditable] {
+        padding-right: 25px;
+    }
+    
+    /* --- PRINT AND PDF STYLES --- */
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+
+      .remove-btn-table, .remove-subject-btn, .remove-part-btn {
+        display: none !important;
+      }
+
+      /* === IMPROVED PAGE BREAK FIX === */
+      .quotation-box > .row, 
+      .subject-section,
+      #productTable tbody tr,
+      .signature,
+      #previewInstallments,
+      #termsList {
+        page-break-inside:avoid;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container mt-4">
+
+    <div class="card p-4 mb-4 no-print">
+      <h4 class="mb-3">Quotation Form</h4>
+
+      <div class="row mb-2">
+        <div class="col-md-6"><input type="text" id="companyName" class="form-control" value="A. R. Plumbing Works">
+        </div>
+        <div class="col-md-6"><input type="text" id="companyDetails" class="form-control"
+            value="N No.65/O.No.34, Dr. Besant Road, Royapettah, Chennai, 600014, India"></div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-md-6"><input type="text" id="companyPhone" class="form-control" value="+91 81484 23204"></div>
+        <div class="col-md-6"><input type="text" id="companyEmail" class="form-control" value="arplumbing@gmail.com">
+        </div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-md-6"><input type="text" id="clientName" class="form-control" placeholder="Enter Client Name">
+        </div>
+        <div class="col-md-6"><input type="text" id="clientMobile" class="form-control"
+            placeholder="Enter Mobile Number"></div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-md-12"><textarea id="clientAddress" class="form-control" rows="3"
+            placeholder="Enter Client Address..."></textarea></div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-md-6"><input type="text" id="quotationNo" class="form-control" value="Quote-2026"></div>
+        <div class="col-md-6"><input type="date" id="quotationDate" class="form-control" value="" required></div>
+      </div>
+      <h5 class="mt-3">Installments</h5>
+      <div id="installmentList">
+        <textarea class="installment form-control">First Installment: Rs 30,000 (In Advance)</textarea>
+      </div>
+      <button class="btn btn-sm btn-secondary mb-3" id="addInstallment">+ Add Installment</button>
+      <h5>Terms & Conditions</h5>
+      <div id="termsInput">
+        <textarea class="term form-control">
+<ol>
+<li>We are only Responsible for our Plumbring Works.</li>
+<li> If you get any additional plumbing work done beyond the tasks mentioned in the list above, you will have to pay according to the rate specified for that particular job.</li>
+<li> NO Civil Work, No Water Proof, No Core Cutting are Covered.</li>
+<li> In this quotation, only pipeline work is included; No Cenetary & equipment is included.</li>
+</ol>
+      </textarea>
+      </div>
+      <button class="btn btn-sm btn-secondary mb-3" id="addTerm">+ Add Term</button>
+      
+      <hr>
+      <h5 class="mt-2">Backup & Restore Quotation</h5>
+      <p class="text-muted small">Download a backup file of the current quotation to your computer or upload a previously saved file to continue editing.</p>
+      <div class="row">
+        <div class="col-md-6 mb-2 mb-md-0">
+          <button class="btn btn-primary w-100" id="uploadBackup">
+            ⬆️ Upload & Edit Backup
+          </button>
+          <input type="file" id="uploadInput" accept=".json" style="display: none;">
+        </div>
+        <div class="col-md-6">
+          <button class="btn btn-success w-100" id="downloadBackup">
+            ⬇️ Download Backup
+          </button>
+        </div>
+      </div>
+      </div>
+
+    <div id="quotationArea" class="quotation-box">
+      <div class="row mb-4">
+        <div class="col-md-9">
+          <h4 id="previewCompanyName" class="fw-bold mb-0">A. R. Plumbing Works</h4>
+          <p id="previewCompanyDetails" class="mb-0">Company Address</p>
+          <p class="mb-0">📞 <span id="previewPhone"></span> | ✉️ <span id="previewEmail"></span></p>
+        </div>
+        <div class="col-md-3 text-end">
+          <h5 class="fw-bold">Quotation</h5>
+        </div>
+      </div>
+
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <p class="mb-1"><strong>To:</strong></p>
+          <div id="previewClientDetails" style="white-space: pre-line;">
+          </div>
+        </div>
+        <div class="col-md-6 text-end">
+          <p><strong>Quotation#</strong> <span id="previewQuotationNo"></span><br><strong>Date:</strong> <span
+              id="previewQuotationDate"></span></p>
+        </div>
+      </div>
+      <hr>
+      <div id="subjectContainer" class="mb-1">
+        <div class="subject-section">
+          <button class="btn btn-sm btn-danger remove-subject-btn no-print">✖</button>
+          <div class="removable-part">
+            <h6 class="fw-bold mb-2" contenteditable="true">Subject: Bathroom Plumbing Work</h6>
+            <button class="btn btn-sm text-danger remove-part-btn no-print">✖</button>
+          </div>
+          <div class="removable-part">
+            <div contenteditable="true" class="form-control content-area">
+              <p>This quotation covers the scope of work for the new bathroom plumbing installation...</p>
+            </div>
+            <button class="btn btn-sm text-danger remove-part-btn no-print">✖</button>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-sm btn-secondary mb-3 no-print" id="addSubject">+ Add Subject</button>
+      <table class="table table-bordered" id="productTable">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Product Name / Description</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="section-heading">
+            <td colspan="4" contenteditable="true">Bathroom Work</td>
+            <td><button class="btn btn-sm btn-danger remove-btn-table no-print">✖</button></td>
+          </tr>
+          <tr>
+            <td>1</td>
+            <td>
+              <div contenteditable="true" class="product-name">Product Name1</div>
+              <small contenteditable="true" class="product-desc">Add Description</small>
+            </td>
+            <td contenteditable="true">1</td>
+            <td contenteditable="true">0</td>
+            <td>
+              0.00
+              <button class="btn btn-sm btn-danger remove-btn-table no-print">✖</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <button class="btn btn-sm btn-success mb-3 no-print" id="addRow">+ Add Product</button>
+      <button class="btn btn-sm btn-info mb-3 no-print" id="addSection">+ Add Section</button>
+      
+      <p class="grand-total">GRAND TOTAL: ₹<span id="grandTotal">0.00</span></p>
+      
+      <h6 class="mt-4">Payment Installments:</h6>
+      <div id="previewInstallments"></div>
+
+      <h6 class="mt-4">Terms & Conditions:</h6>
+      <div id="termsList" style="white-space: pre-wrap;"></div>
+
+      <div class="signature">
+        <p>For, <span id="previewCompanyName2">A. R. Plumbing Works</span></p>
+        <div class="signature-line"></div>
+        <p>Authorized Signature</p>
+      </div>
+    </div>
+
+    <div class="text-center my-4">
+      <button class="btn btn-primary no-print" id="updatePreview">Update Preview</button>
+      <button class="btn btn-danger no-print" id="downloadPDF">Download PDF</button>
+    </div>
+
+  </div>
+
+  <script>
+    // Auto select current date
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('quotationDate').value = today;
+
+    function calculateTotal() {
+      let grandTotal = 0;
+      let counter = 1;
+      $("#productTable tbody tr").each(function () {
+        if (!$(this).hasClass("section-heading") && !$(this).hasClass("empty-row")) {
+          let qty = parseFloat($(this).find("td:eq(2)").text()) || 0;
+          let price = parseFloat($(this).find("td:eq(3)").text()) || 0;
+          let total = qty * price;
+          $(this).find("td:eq(4)").contents().first()[0].nodeValue = Math.round(total).toLocaleString('en-US');
+          $(this).find("td:eq(0)").text(counter++);
+          grandTotal += total;
+        }
+      });
+      $("#grandTotal").text(Math.round(grandTotal).toLocaleString('en-US'));
+    }
+
+    $("#updatePreview").click(function () {
+      // All preview update logic is here...
+      $("#previewCompanyName, #previewCompanyName2").text($("#companyName").val());
+      $("#previewCompanyDetails").text($("#companyDetails").val());
+      $("#previewPhone").text($("#companyPhone").val());
+      $("#previewEmail").text($("#companyEmail").val());
+      $("#previewQuotationNo").text($("#quotationNo").val());
+      $("#previewQuotationDate").text($("#quotationDate").val());
+      let clientName = $("#clientName").val();
+      let clientMobile = $("#clientMobile").val();
+      let clientAddress = $("#clientAddress").val();
+      let clientDetailsText = "";
+      if (clientName) clientDetailsText += clientName + '\n';
+      if (clientMobile) clientDetailsText += clientMobile + '\n';
+      if (clientAddress) clientDetailsText += clientAddress;
+      $("#previewClientDetails").text(clientDetailsText);
+      $("#previewInstallments").empty();
+      $(".installment").each(function () {
+        if ($(this).val().trim() !== "") {
+          $("#previewInstallments").append("<p>" + $(this).val() + "</p>");
+        }
+      });
+      $("#termsList").empty();
+      $(".term").each(function () {
+        if ($(this).val().trim() !== "") {
+          $("#termsList").html($(this).val());
+        }
+      });
+      calculateTotal();
+    });
+
+    $("#addInstallment").click(function () {
+      $("#installmentList").append('<textarea class="installment form-control mt-2"></textarea>');
+    });
+
+    $("#addTerm").click(function () {
+      $("#termsInput").append('<textarea class="term form-control mt-2"></textarea>');
+    });
+
+    $("#addSection").click(function () {
+      $("#productTable tbody").append(`
+        <tr class="section-heading">
+          <td colspan="4" contenteditable="true">New Section</td>
+          <td><button class="btn btn-sm btn-danger remove-btn-table no-print">✖</button></td>
+        </tr>
+      `);
+    });
+
+    $("#addRow").click(function () {
+      $("#productTable tbody").append(`
+        <tr>
+          <td>0</td>
+          <td>
+            <div contenteditable="true" class="product-name">Product Name</div>
+            <small contenteditable="true" class="product-desc">Add Description</small>
+          </td>
+          <td contenteditable="true">1</td>
+          <td contenteditable="true">0</td>
+          <td>
+            0.00
+            <button class="btn btn-sm btn-danger remove-btn-table no-print">✖</button>
+          </td>
+        </tr>
+      `);
+      calculateTotal();
+    });
+    
+    $(document).on("click", ".remove-btn-table", function () {
+        $(this).closest("tr").remove();
+        calculateTotal();
+    });
+
+    $("#addSubject").click(function() {
+      const newSectionHTML = `
+        <div class="subject-section">
+          <button class="btn btn-sm btn-danger remove-subject-btn no-print">✖</button>
+          <div class="removable-part">
+            <h6 class="fw-bold mb-2" contenteditable="true">New Subject</h6>
+            <button class="btn btn-sm text-danger remove-part-btn no-print">✖</button>
+          </div>
+          <div class="removable-part">
+            <div contenteditable="true" class="form-control content-area">
+               <p>Add description here...</p>
+            </div>
+            <button class="btn btn-sm text-danger remove-part-btn no-print">✖</button>
+          </div>
+        </div>
+      `;
+      $("#subjectContainer").append(newSectionHTML);
+    });
+    
+    $(document).on("click", ".remove-subject-btn", function () {
+        $(this).closest(".subject-section").remove();
+    });
+
+    $(document).on("click", ".remove-part-btn", function () {
+        const subjectSection = $(this).closest(".subject-section");
+        $(this).closest(".removable-part").remove();
+        if (subjectSection.find(".removable-part").length === 0) {
+            subjectSection.remove();
+        }
+    });
+
+    $(document).on("input", "#productTable td[contenteditable=true]", function () {
+      calculateTotal();
+    });
+    
+    // === START: FILE BACKUP SCRIPT (Corrected Version) ===
+
+    // This helper function gathers all data from the form and table
+    function getQuotationData() {
+        const quotationData = {
+            companyName: $("#companyName").val(),
+            companyDetails: $("#companyDetails").val(),
+            companyPhone: $("#companyPhone").val(),
+            companyEmail: $("#companyEmail").val(),
+            clientName: $("#clientName").val(),
+            clientMobile: $("#clientMobile").val(),
+            clientAddress: $("#clientAddress").val(),
+            quotationNo: $("#quotationNo").val(),
+            quotationDate: $("#quotationDate").val(),
+            installments: [],
+            terms: [],
+            subjectSections: [], // Added this to store subject data
+            tableData: []
+        };
+        $(".installment").each(function() { quotationData.installments.push($(this).val()); });
+        $(".term").each(function() { quotationData.terms.push($(this).val()); });
+        
+        // This new part saves the subject sections
+        $("#subjectContainer .subject-section").each(function() {
+            const heading = $(this).find('h6').text();
+            const content = $(this).find('.content-area').html();
+            quotationData.subjectSections.push({ heading: heading, content: content });
+        });
+        
+        $("#productTable tbody tr").each(function() {
+            const $row = $(this);
+            if ($row.hasClass('section-heading')) {
+                quotationData.tableData.push({ type: 'section', text: $row.find('td:first').text() });
+            } else if (!$row.hasClass('empty-row')) {
+                quotationData.tableData.push({
+                    type: 'product',
+                    name: $row.find('.product-name').text(),
+                    desc: $row.find('.product-desc').text(),
+                    qty: $row.find('td:eq(2)').text(),
+                    price: $row.find('td:eq(3)').text()
+                });
+            }
+        });
+        return quotationData;
+    }
+
+    // This helper function populates the form and table from data object
+    function populateFormWithData(data) {
+        $("#companyName").val(data.companyName);
+        $("#companyDetails").val(data.companyDetails);
+        $("#companyPhone").val(data.companyPhone);
+        $("#companyEmail").val(data.companyEmail);
+        $("#clientName").val(data.clientName);
+        $("#clientMobile").val(data.clientMobile);
+        $("#clientAddress").val(data.clientAddress);
+        $("#quotationNo").val(data.quotationNo);
+        $("#quotationDate").val(data.quotationDate);
+        
+        $("#installmentList").html('');
+        (data.installments || []).forEach(val => $("#installmentList").append(`<textarea class="installment form-control mt-2">${val}</textarea>`));
+        $("#termsInput").html('');
+        (data.terms || []).forEach(val => $("#termsInput").append(`<textarea class="term form-control mt-2">${val}</textarea>`));
+        
+        // This new part loads the subject sections
+        $("#subjectContainer").html('');
+        (data.subjectSections || []).forEach(sectionData => {
+            const newSectionHTML = `
+                <div class="subject-section">
+                  <button class="btn btn-sm btn-danger remove-subject-btn no-print">✖</button>
+                  <div class="removable-part">
+                    <h6 class="fw-bold mb-2" contenteditable="true">${sectionData.heading}</h6>
+                    <button class="btn btn-sm text-danger remove-part-btn no-print">✖</button>
+                  </div>
+                  <div class="removable-part">
+                    <div contenteditable="true" class="form-control content-area">${sectionData.content}</div>
+                    <button class="btn btn-sm text-danger remove-part-btn no-print">✖</button>
+                  </div>
+                </div>
+              `;
+            $("#subjectContainer").append(newSectionHTML);
+        });
+        
+        const $tbody = $("#productTable tbody");
+        $tbody.html('');
+        (data.tableData || []).forEach(rowData => {
+            let rowHtml = '';
+            if (rowData.type === 'section') {
+                rowHtml = `<tr class="section-heading"><td colspan="4" contenteditable="true">${rowData.text}</td><td><button class="btn btn-sm btn-danger remove-btn-table no-print">✖</button></td></tr>`;
+            } else {
+                rowHtml = `<tr><td>0</td><td><div contenteditable="true" class="product-name">${rowData.name}</div><small contenteditable="true" class="product-desc">${rowData.desc}</small></td><td contenteditable="true">${rowData.qty}</td><td contenteditable="true">${rowData.price}</td><td>0.00<button class="btn btn-sm btn-danger remove-btn-table no-print">✖</button></td></tr>`;
+            }
+            $tbody.append(rowHtml);
+        });
+        $("#updatePreview").click();
+    }
+
+    // 1. Logic for Download Backup button
+    $("#downloadBackup").click(function() {
+        const data = getQuotationData();
+        const quotationNo = data.quotationNo.trim();
+        if (!quotationNo) {
+            alert("Please enter a Quotation Number before downloading.");
+            return;
+        }
+
+        const jsonString = JSON.stringify(data, null, 2); // Formatted JSON
+        const blob = new Blob([jsonString], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Quotation-${quotationNo}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+
+    // 2. Logic for Upload Backup button
+    $("#uploadBackup").click(function() {
+        // This triggers the hidden file input
+        $("#uploadInput").click();
+    });
+
+    // 3. Logic to read the selected file
+    $("#uploadInput").change(function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                populateFormWithData(data);
+                alert(`Quotation "${data.quotationNo}" loaded successfully!`);
+            } catch (error) {
+                alert("Error: Invalid or corrupted backup file.");
+            }
+        };
+        reader.readAsText(file);
+        
+        // Reset the input value to allow uploading the same file again
+        $(this).val('');
+    });
+    
+    // === END: FILE BACKUP SCRIPT ===
+
+    $("#downloadPDF").click(function () {
+      $("#updatePreview").click();
+      let $clone = $("#quotationArea").clone();
+      
+      $clone.find(".product-desc").each(function () {
+        if ($(this).text().trim() === "" || $(this).text().trim() === "Add Description") $(this).remove();
+      });
+
+      $clone.find(".subject-section").each(function() {
+        const heading = $(this).find('h6');
+        if (heading.length && (heading.text().trim() === '' || heading.text().trim() === 'New Subject')) {
+            heading.closest('.removable-part').remove();
+        }
+        const contentArea = $(this).find('.content-area');
+        if (contentArea.length) {
+            const contentText = contentArea.text().trim();
+            if (contentText === "" || contentText === "Add description here...") {
+                contentArea.closest('.removable-part').remove();
+            }
+        }
+        if ($(this).find('.removable-part').length === 0) {
+            $(this).remove();
+        }
+      });
+
+      $clone.find(".no-print").remove();
+      $clone.find('[contenteditable]').attr('contenteditable', 'false');
+
+      let clientName = $("#clientName").val().trim() || "Quotation";
+      
+      const options = {
+        margin: [0.25, 0.25, 0.25, 0.25],
+        filename: clientName + '.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'avoid-all'] }
+      };
+
+      html2pdf().from($clone[0]).set(options).save();
+    });
+
+    // Initial load Actions
+    calculateTotal();
+    $("#updatePreview").click();
+
+  </script>
+
+</body>
+
+</html>
