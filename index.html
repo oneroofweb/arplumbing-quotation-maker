@@ -5,8 +5,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quotation Maker</title>
+  <script>
+    if (!localStorage.getItem('token')) {
+      window.location.href = 'login.html';
+    }
+    
+    function logout() {
+      localStorage.removeItem('token');
+      window.location.href = 'login.html';
+    }
+  </script>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     body {
@@ -63,38 +76,26 @@
 
     /* === CSS FOR SUBJECT/CONTENT SECTION === */
     .subject-section {
-      position: relative;
-      border-radius: 5px;
-      padding-top: 40px;
-      margin-bottom: 0px;
+      margin-bottom: 20px;
     }
 
-    .remove-subject-btn {
-      position: absolute;
-      top: -13px;
-      right: 5px;
+    .remove-part-btn, .remove-subject-btn {
+      padding: 0 5px;
+      line-height: 1.2;
     }
     
-    .removable-part {
-        position: relative;
-        margin-bottom: 5px;
-    }
-    
-    .removable-part .remove-part-btn {
-        position: absolute;
-        top: 50%;
-        right: 0px;
-        transform: translateY(-50%);
-        padding: 0 5px;
-        line-height: 1.2;
-        border: none;
-    }
-
     .removable-part [contenteditable] {
-        padding-right: 25px;
+        min-height: 24px;
     }
     
     /* --- PRINT AND PDF STYLES --- */
+    /* --- RATE LIST MODE STYLES --- */
+    .rate-list-mode .grand-total,
+    .rate-list-mode #headingInstallments,
+    .rate-list-mode #previewInstallments {
+      display: none !important;
+    }
+
     @media print {
       .no-print {
         display: none !important;
@@ -118,72 +119,103 @@
 </head>
 
 <body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark no-print">
+      <div class="container">
+          <a class="navbar-brand" href="#">AR Plumbing Admin</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+              <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarNav">
+              <ul class="navbar-nav me-auto">
+                  <li class="nav-item"><a class="nav-link active" href="index.html">Create Quotation</a></li>
+                  <li class="nav-item"><a class="nav-link" href="admin.html">Admin Panel</a></li>
+              </ul>
+              <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
+          </div>
+      </div>
+  </nav>
 
   <div class="container mt-4">
 
-    <div class="card p-4 mb-4 no-print">
-      <h4 class="mb-3">Quotation Form</h4>
+    <div class="card p-3 mb-4 no-print shadow-sm">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0 fw-bold">Quotation Details</h5>
+        <div class="d-flex align-items-center">
+          <div class="form-check form-switch me-3 no-print">
+            <input class="form-check-input" type="checkbox" id="rateListModeToggle">
+            <label class="form-check-label small text-muted" for="rateListModeToggle">Rate List Mode</label>
+          </div>
+          <button class="btn btn-primary btn-sm" id="loadFromDbBtn">⬆️ Load from DB</button>
+        </div>
+      </div>
 
-      <div class="row mb-2">
-        <div class="col-md-6"><input type="text" id="companyName" class="form-control" value="A. R. Plumbing Works">
+      <!-- Compact Client & Date Info -->
+      <div class="row g-2 mb-3">
+        <div class="col-md-3">
+            <label class="form-label small mb-1 text-muted">Client Name</label>
+            <input type="text" id="clientName" class="form-control form-control-sm" placeholder="Enter Client Name">
         </div>
-        <div class="col-md-6"><input type="text" id="companyDetails" class="form-control"
-            value="N No.65/O.No.34, Dr. Besant Road, Royapettah, Chennai, 600014, India"></div>
-      </div>
-      <div class="row mb-2">
-        <div class="col-md-6"><input type="text" id="companyPhone" class="form-control" value="+91 81484 23204"></div>
-        <div class="col-md-6"><input type="text" id="companyEmail" class="form-control" value="arplumbing@gmail.com">
+        <div class="col-md-3">
+            <label class="form-label small mb-1 text-muted">Mobile Number</label>
+            <input type="text" id="clientMobile" class="form-control form-control-sm" placeholder="Enter Mobile">
         </div>
-      </div>
-      <div class="row mb-2">
-        <div class="col-md-6"><input type="text" id="clientName" class="form-control" placeholder="Enter Client Name">
+        <div class="col-md-3">
+            <label class="form-label small mb-1 text-muted">Quotation No</label>
+            <input type="text" id="quotationNo" class="form-control form-control-sm">
         </div>
-        <div class="col-md-6"><input type="text" id="clientMobile" class="form-control"
-            placeholder="Enter Mobile Number"></div>
-      </div>
-      <div class="row mb-2">
-        <div class="col-md-12"><textarea id="clientAddress" class="form-control" rows="3"
-            placeholder="Enter Client Address..."></textarea></div>
-      </div>
-      <div class="row mb-2">
-        <div class="col-md-6"><input type="text" id="quotationNo" class="form-control" value="Quote-2026"></div>
-        <div class="col-md-6"><input type="date" id="quotationDate" class="form-control" value="" required></div>
-      </div>
-      <h5 class="mt-3">Installments</h5>
-      <div id="installmentList">
-        <textarea class="installment form-control">First Installment: Rs 30,000 (In Advance)</textarea>
-      </div>
-      <button class="btn btn-sm btn-secondary mb-3" id="addInstallment">+ Add Installment</button>
-      <h5>Terms & Conditions</h5>
-      <div id="termsInput">
-        <textarea class="term form-control">
-<ol>
-<li>We are only Responsible for our Plumbring Works.</li>
-<li> If you get any additional plumbing work done beyond the tasks mentioned in the list above, you will have to pay according to the rate specified for that particular job.</li>
-<li> NO Civil Work, No Water Proof, No Core Cutting are Covered.</li>
-<li> In this quotation, only pipeline work is included; No Cenetary & equipment is included.</li>
-</ol>
-      </textarea>
-      </div>
-      <button class="btn btn-sm btn-secondary mb-3" id="addTerm">+ Add Term</button>
-      
-      <hr>
-      <h5 class="mt-2">Backup & Restore Quotation</h5>
-      <p class="text-muted small">Download a backup file of the current quotation to your computer or upload a previously saved file to continue editing.</p>
-      <div class="row">
-        <div class="col-md-6 mb-2 mb-md-0">
-          <button class="btn btn-primary w-100" id="uploadBackup">
-            ⬆️ Upload & Edit Backup
-          </button>
-          <input type="file" id="uploadInput" accept=".json" style="display: none;">
+        <div class="col-md-3">
+            <label class="form-label small mb-1 text-muted">Date</label>
+            <input type="date" id="quotationDate" class="form-control form-control-sm" required>
         </div>
-        <div class="col-md-6">
-          <button class="btn btn-success w-100" id="downloadBackup">
-            ⬇️ Download Backup
-          </button>
+        <div class="col-12">
+            <textarea id="clientAddress" class="form-control form-control-sm" placeholder="Client Address..." style="max-height: 100px; resize: vertical;" rows="2"></textarea>
         </div>
       </div>
+
+      <!-- Hidden company details to avoid breaking JS logic -->
+      <div class="d-none">
+        <input type="text" id="companyName" value="A. R. Plumbing Works">
+        <input type="text" id="companyDetails" value="N No.65/O.No.34, Dr. Besant Road, Royapettah, Chennai, 600014, India">
+        <input type="text" id="companyPhone" value="+91 81484 23204">
+        <input type="text" id="companyEmail" value="arplumbing@gmail.com">
       </div>
+
+      <!-- Collapsible Advanced Settings (Installments & T&C) -->
+      <div class="accordion" id="advancedSettings">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed py-2 text-muted" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSettings" style="font-size: 14px;">
+              View Installments & Terms and Conditions
+            </button>
+          </h2>
+          <div id="collapseSettings" class="accordion-collapse collapse" data-bs-parent="#advancedSettings">
+            <div class="accordion-body">
+              <div class="row">
+                <!-- Installments -->
+                <div class="col-md-6 border-end">
+                  <h6 class="text-secondary">Installments</h6>
+                  <div id="installmentList">
+                    <textarea class="installment form-control form-control-sm mb-2">First Installment: Rs 30,000 (In Advance)</textarea>
+                  </div>
+                  <button class="btn btn-sm btn-secondary" id="addInstallment">+ Add Installment</button>
+                </div>
+                <!-- T&C -->
+                <div class="col-md-6">
+                  <h6 class="text-secondary">Terms & Conditions</h6>
+                  <div id="termsInput">
+                    <!-- Terms will be added here -->
+                  </div>
+                  <div class="d-flex gap-2 mt-2">
+                    <button class="btn btn-sm btn-secondary" id="addTerm">+ Add Term</button>
+                    <button class="btn btn-sm btn-primary no-print" id="loadTermBtn" data-bs-toggle="modal" data-bs-target="#loadTermModal">Load Saved T&C</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div id="quotationArea" class="quotation-box">
       <div class="row mb-4">
@@ -193,7 +225,7 @@
           <p class="mb-0">📞 <span id="previewPhone"></span> | ✉️ <span id="previewEmail"></span></p>
         </div>
         <div class="col-md-3 text-end">
-          <h5 class="fw-bold">Quotation</h5>
+          <h5 class="fw-bold" id="previewDocTitle">Quotation</h5>
         </div>
       </div>
 
@@ -210,17 +242,19 @@
       </div>
       <hr>
       <div id="subjectContainer" class="mb-1">
-        <div class="subject-section">
-          <button class="btn btn-sm btn-danger remove-subject-btn no-print">✖</button>
-          <div class="removable-part">
-            <h6 class="fw-bold mb-2" contenteditable="true">Subject: Bathroom Plumbing Work</h6>
-            <button class="btn btn-sm text-danger remove-part-btn no-print">✖</button>
-          </div>
-          <div class="removable-part">
-            <div contenteditable="true" class="form-control content-area">
-              <p>This quotation covers the scope of work for the new bathroom plumbing installation...</p>
+        <div class="subject-section border rounded p-2 mb-2 bg-light">
+          <div class="d-flex justify-content-between align-items-center mb-1 removable-part">
+            <h6 class="fw-bold mb-0 flex-grow-1" contenteditable="true" style="font-size: 15px; text-decoration: underline;">Subject: Bathroom Plumbing Work</h6>
+            <div class="d-flex align-items-center ms-2">
+              <button class="btn btn-sm text-danger remove-part-btn no-print" title="Remove Heading">✖</button>
+              <button class="btn btn-sm btn-danger remove-subject-btn no-print ms-2" title="Remove Entire Section">✖</button>
             </div>
-            <button class="btn btn-sm text-danger remove-part-btn no-print">✖</button>
+          </div>
+          <div class="removable-part d-flex align-items-start">
+            <div contenteditable="true" class="content-area flex-grow-1 bg-white p-2 rounded border" style="font-size: 14px; min-height: 40px; line-height: 1.5;">
+              <p class="mb-0">This quotation covers the scope of work for the new bathroom plumbing installation...</p>
+            </div>
+            <button class="btn btn-sm text-danger remove-part-btn no-print ms-2 mt-1" title="Remove Description">✖</button>
           </div>
         </div>
       </div>
@@ -233,12 +267,13 @@
             <th>Qty</th>
             <th>Price</th>
             <th>Total</th>
+            <th class="no-print" style="width: 40px;"></th>
           </tr>
         </thead>
         <tbody>
           <tr class="section-heading">
-            <td colspan="4" contenteditable="true">Bathroom Work</td>
-            <td><button class="btn btn-sm btn-danger remove-btn-table no-print">✖</button></td>
+            <td colspan="5" contenteditable="true">Bathroom Work</td>
+            <td class="no-print"><button class="btn btn-sm btn-danger remove-btn-table">✖</button></td>
           </tr>
           <tr>
             <td>1</td>
@@ -249,8 +284,10 @@
             <td contenteditable="true">1</td>
             <td contenteditable="true">0</td>
             <td>
-              0.00
-              <button class="btn btn-sm btn-danger remove-btn-table no-print">✖</button>
+              ₹<span class="row-total">0.00</span>
+            </td>
+            <td class="no-print">
+              <button class="btn btn-sm btn-danger remove-btn-table">✖</button>
             </td>
           </tr>
         </tbody>
@@ -260,22 +297,24 @@
       
       <p class="grand-total">GRAND TOTAL: ₹<span id="grandTotal">0.00</span></p>
       
-      <h6 class="mt-4">Payment Installments:</h6>
+      <h6 class="mt-4" id="headingInstallments">Payment Installments:</h6>
       <div id="previewInstallments"></div>
 
-      <h6 class="mt-4">Terms & Conditions:</h6>
+      <h6 class="mt-4" id="headingTerms">Terms & Conditions:</h6>
       <div id="termsList" style="white-space: pre-wrap;"></div>
 
       <div class="signature">
         <p>For, <span id="previewCompanyName2">A. R. Plumbing Works</span></p>
-        <div class="signature-line"></div>
+        <img id="previewSignature" src="" alt="Signature" style="max-height: 80px; display: none; margin-bottom: 5px;">
+        <div class="signature-line" id="signatureLine"></div>
         <p>Authorized Signature</p>
       </div>
     </div>
 
     <div class="text-center my-4">
-      <button class="btn btn-primary no-print" id="updatePreview">Update Preview</button>
-      <button class="btn btn-danger no-print" id="downloadPDF">Download PDF</button>
+      <button class="btn btn-primary no-print me-2" id="updatePreview">Update Preview</button>
+      <button class="btn btn-success no-print me-2" id="saveToDbBtn">⬇️ Save to DB</button>
+      <button class="btn btn-danger no-print" id="downloadPDF" style="display: none;">Download PDF</button>
     </div>
 
   </div>
@@ -285,6 +324,67 @@
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('quotationDate').value = today;
 
+    const API_URL = 'http://localhost:3000/api';
+    let clientsData = [];
+    let productsData = [];
+
+    // Load master data
+    async function loadMasterData() {
+      try {
+        const cRes = await fetch(`${API_URL}/clients`);
+        clientsData = await cRes.json();
+        
+        const pRes = await fetch(`${API_URL}/products`);
+        productsData = await pRes.json();
+
+        setupClientAutocomplete();
+        setupProductAutocomplete();
+      } catch (err) {
+        console.error("Error loading master data", err);
+      }
+    }
+
+    function setupClientAutocomplete() {
+      $("#clientName").autocomplete({
+        source: clientsData.map(c => c.name),
+        select: function(event, ui) {
+          const client = clientsData.find(c => c.name === ui.item.value);
+          if (client) {
+            $("#clientMobile").val(client.mobile);
+            $("#clientAddress").val(client.address);
+          }
+        }
+      });
+    }
+
+    function setupProductAutocomplete() {
+      // Since products are added dynamically, we bind autocomplete on focus
+      $(document).on("focus", ".product-name", function() {
+        if (!$(this).data("autocomplete-init")) {
+          $(this).autocomplete({
+            source: productsData.map(p => p.name),
+            select: function(event, ui) {
+              const prod = productsData.find(p => p.name === ui.item.value);
+              if (prod) {
+                if ($(this).is("input")) {
+                  $(this).val(prod.name);
+                } else {
+                  $(this).text(prod.name);
+                }
+                $(this).siblings(".product-desc").html(prod.description);
+                $(this).closest("tr").find("td:eq(3)").text(prod.price || 0);
+                calculateTotal();
+                return false;
+              }
+            }
+          });
+          $(this).data("autocomplete-init", true);
+        }
+      });
+    }
+
+    loadMasterData();
+
     function calculateTotal() {
       let grandTotal = 0;
       let counter = 1;
@@ -293,7 +393,7 @@
           let qty = parseFloat($(this).find("td:eq(2)").text()) || 0;
           let price = parseFloat($(this).find("td:eq(3)").text()) || 0;
           let total = qty * price;
-          $(this).find("td:eq(4)").contents().first()[0].nodeValue = Math.round(total).toLocaleString('en-US');
+          $(this).find(".row-total").text(Math.round(total).toLocaleString('en-US') + '.00');
           $(this).find("td:eq(0)").text(counter++);
           grandTotal += total;
         }
@@ -318,17 +418,39 @@
       if (clientAddress) clientDetailsText += clientAddress;
       $("#previewClientDetails").text(clientDetailsText);
       $("#previewInstallments").empty();
+      let hasInstallments = false;
       $(".installment").each(function () {
         if ($(this).val().trim() !== "") {
-          $("#previewInstallments").append("<p>" + $(this).val() + "</p>");
+          $("#previewInstallments").append("<p class='mb-1'>" + $(this).val() + "</p>");
+          hasInstallments = true;
         }
       });
+      if (hasInstallments) {
+        $("#headingInstallments").show();
+      } else {
+        $("#headingInstallments").hide();
+      }
+
       $("#termsList").empty();
+      let tHtml = "<ol style='padding-left: 20px; margin-bottom: 0;'>";
+      let hasTerms = false;
       $(".term").each(function () {
         if ($(this).val().trim() !== "") {
-          $("#termsList").html($(this).val());
+          tHtml += "<li>" + $(this).val() + "</li>";
+          hasTerms = true;
         }
       });
+      tHtml += "</ol>";
+      if (hasTerms) {
+        $("#termsList").html(tHtml);
+        $("#headingTerms").show();
+      } else {
+        $("#headingTerms").hide();
+      }
+      
+      $("#saveToDbBtn").show();
+      $("#downloadPDF").hide();
+      
       calculateTotal();
     });
 
@@ -343,14 +465,15 @@
     $("#addSection").click(function () {
       $("#productTable tbody").append(`
         <tr class="section-heading">
-          <td colspan="4" contenteditable="true">New Section</td>
-          <td><button class="btn btn-sm btn-danger remove-btn-table no-print">✖</button></td>
+          <td colspan="5" contenteditable="true">New Section</td>
+          <td class="no-print"><button class="btn btn-sm btn-danger remove-btn-table">✖</button></td>
         </tr>
       `);
     });
 
     $("#addRow").click(function () {
-      $("#productTable tbody").append(`
+      const rowId = 'row-' + Date.now();
+      const newRow = `
         <tr>
           <td>0</td>
           <td>
@@ -360,32 +483,40 @@
           <td contenteditable="true">1</td>
           <td contenteditable="true">0</td>
           <td>
-            0.00
-            <button class="btn btn-sm btn-danger remove-btn-table no-print">✖</button>
+            ₹<span class="row-total">0.00</span>
+          </td>
+          <td class="no-print">
+            <button class="btn btn-sm btn-danger remove-btn-table">✖</button>
           </td>
         </tr>
-      `);
+      `;
+      $("#productTable tbody").append(newRow);
+      
       calculateTotal();
     });
     
     $(document).on("click", ".remove-btn-table", function () {
-        $(this).closest("tr").remove();
-        calculateTotal();
+        if (confirm("Are you sure you want to delete this row?")) {
+            $(this).closest("tr").remove();
+            calculateTotal();
+        }
     });
 
     $("#addSubject").click(function() {
       const newSectionHTML = `
-        <div class="subject-section">
-          <button class="btn btn-sm btn-danger remove-subject-btn no-print">✖</button>
-          <div class="removable-part">
-            <h6 class="fw-bold mb-2" contenteditable="true">New Subject</h6>
-            <button class="btn btn-sm text-danger remove-part-btn no-print">✖</button>
-          </div>
-          <div class="removable-part">
-            <div contenteditable="true" class="form-control content-area">
-               <p>Add description here...</p>
+        <div class="subject-section border rounded p-2 mb-2 bg-light">
+          <div class="d-flex justify-content-between align-items-center mb-1 removable-part">
+            <h6 class="fw-bold mb-0 flex-grow-1" contenteditable="true" style="font-size: 15px; text-decoration: underline;">New Subject</h6>
+            <div class="d-flex align-items-center ms-2">
+              <button class="btn btn-sm text-danger remove-part-btn no-print" title="Remove Heading">✖</button>
+              <button class="btn btn-sm btn-danger remove-subject-btn no-print ms-2" title="Remove Entire Section">✖</button>
             </div>
-            <button class="btn btn-sm text-danger remove-part-btn no-print">✖</button>
+          </div>
+          <div class="removable-part d-flex align-items-start">
+            <div contenteditable="true" class="content-area flex-grow-1 bg-white p-2 rounded border" style="font-size: 14px; min-height: 40px; line-height: 1.5;">
+               <p class="mb-0">Add description here...</p>
+            </div>
+            <button class="btn btn-sm text-danger remove-part-btn no-print ms-2 mt-1" title="Remove Description">✖</button>
           </div>
         </div>
       `;
@@ -393,15 +524,27 @@
     });
     
     $(document).on("click", ".remove-subject-btn", function () {
-        $(this).closest(".subject-section").remove();
+        if (confirm("Are you sure you want to delete this entire subject section?")) {
+            $(this).closest(".subject-section").remove();
+        }
     });
 
     $(document).on("click", ".remove-part-btn", function () {
-        const subjectSection = $(this).closest(".subject-section");
-        $(this).closest(".removable-part").remove();
-        if (subjectSection.find(".removable-part").length === 0) {
-            subjectSection.remove();
+        if (confirm("Are you sure you want to delete this part?")) {
+            const subjectSection = $(this).closest(".subject-section");
+            $(this).closest(".removable-part").remove();
+            if (subjectSection.find(".removable-part").length === 0) {
+                subjectSection.remove();
+            }
         }
+    });
+
+    $(document).on("focus", "#productTable td[contenteditable=true]", function () {
+        const range = document.createRange();
+        range.selectNodeContents(this);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
     });
 
     $(document).on("input", "#productTable td[contenteditable=true]", function () {
@@ -475,15 +618,17 @@
         $("#subjectContainer").html('');
         (data.subjectSections || []).forEach(sectionData => {
             const newSectionHTML = `
-                <div class="subject-section">
-                  <button class="btn btn-sm btn-danger remove-subject-btn no-print">✖</button>
-                  <div class="removable-part">
-                    <h6 class="fw-bold mb-2" contenteditable="true">${sectionData.heading}</h6>
-                    <button class="btn btn-sm text-danger remove-part-btn no-print">✖</button>
+                <div class="subject-section border rounded p-2 mb-2 bg-light">
+                  <div class="d-flex justify-content-between align-items-center mb-1 removable-part">
+                    <h6 class="fw-bold mb-0 flex-grow-1" contenteditable="true" style="font-size: 15px; text-decoration: underline;">${sectionData.heading}</h6>
+                    <div class="d-flex align-items-center ms-2">
+                      <button class="btn btn-sm text-danger remove-part-btn no-print" title="Remove Heading">✖</button>
+                      <button class="btn btn-sm btn-danger remove-subject-btn no-print ms-2" title="Remove Entire Section">✖</button>
+                    </div>
                   </div>
-                  <div class="removable-part">
-                    <div contenteditable="true" class="form-control content-area">${sectionData.content}</div>
-                    <button class="btn btn-sm text-danger remove-part-btn no-print">✖</button>
+                  <div class="removable-part d-flex align-items-start">
+                    <div contenteditable="true" class="content-area flex-grow-1 bg-white p-2 rounded border" style="font-size: 14px; min-height: 40px; line-height: 1.5;">${sectionData.content}</div>
+                    <button class="btn btn-sm text-danger remove-part-btn no-print ms-2 mt-1" title="Remove Description">✖</button>
                   </div>
                 </div>
               `;
@@ -495,62 +640,98 @@
         (data.tableData || []).forEach(rowData => {
             let rowHtml = '';
             if (rowData.type === 'section') {
-                rowHtml = `<tr class="section-heading"><td colspan="4" contenteditable="true">${rowData.text}</td><td><button class="btn btn-sm btn-danger remove-btn-table no-print">✖</button></td></tr>`;
+                rowHtml = `<tr class="section-heading"><td colspan="5" contenteditable="true">${rowData.text}</td><td class="no-print"><button class="btn btn-sm btn-danger remove-btn-table">✖</button></td></tr>`;
             } else {
-                rowHtml = `<tr><td>0</td><td><div contenteditable="true" class="product-name">${rowData.name}</div><small contenteditable="true" class="product-desc">${rowData.desc}</small></td><td contenteditable="true">${rowData.qty}</td><td contenteditable="true">${rowData.price}</td><td>0.00<button class="btn btn-sm btn-danger remove-btn-table no-print">✖</button></td></tr>`;
+                rowHtml = `<tr><td>0</td><td><div contenteditable="true" class="product-name">${rowData.name}</div><small contenteditable="true" class="product-desc">${rowData.desc}</small></td><td contenteditable="true">${rowData.qty}</td><td contenteditable="true">${rowData.price}</td><td>₹<span class="row-total">0.00</span></td><td class="no-print"><button class="btn btn-sm btn-danger remove-btn-table">✖</button></td></tr>`;
             }
             $tbody.append(rowHtml);
         });
         $("#updatePreview").click();
     }
 
-    // 1. Logic for Download Backup button
-    $("#downloadBackup").click(function() {
+    // 1. Logic for Save to Database button
+    $("#saveToDbBtn").click(async function() {
         const data = getQuotationData();
         const quotationNo = data.quotationNo.trim();
         if (!quotationNo) {
-            alert("Please enter a Quotation Number before downloading.");
+            alert("Please enter a Quotation Number before saving.");
             return;
         }
 
-        const jsonString = JSON.stringify(data, null, 2); // Formatted JSON
-        const blob = new Blob([jsonString], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Quotation-${quotationNo}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    });
-
-    // 2. Logic for Upload Backup button
-    $("#uploadBackup").click(function() {
-        // This triggers the hidden file input
-        $("#uploadInput").click();
-    });
-
-    // 3. Logic to read the selected file
-    $("#uploadInput").change(function(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const data = JSON.parse(e.target.result);
-                populateFormWithData(data);
-                alert(`Quotation "${data.quotationNo}" loaded successfully!`);
-            } catch (error) {
-                alert("Error: Invalid or corrupted backup file.");
+        try {
+            const res = await fetch(`${API_URL}/quotations`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                alert("Quotation saved successfully!");
+                $("#saveToDbBtn").hide();
+                $("#downloadPDF").show();
+                saveNewProducts(data.tableData);
+            } else {
+                const err = await res.json();
+                alert("Error saving: " + err.error);
             }
-        };
-        reader.readAsText(file);
+        } catch (error) {
+            alert("Network error.");
+        }
+    });
+
+    async function saveNewProducts(tableData) {
+        for (let row of tableData) {
+            if (row.type === 'product') {
+                const existing = productsData.find(p => p.name === row.name);
+                if (!existing) {
+                    try {
+                        const res = await fetch(`${API_URL}/products`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                name: row.name,
+                                description: row.desc,
+                                price: parseFloat(row.price) || 0
+                            })
+                        });
+                        const newProd = await res.json();
+                        productsData.push(newProd);
+                    } catch (e) {
+                        console.error("Failed to save product", row.name);
+                    }
+                }
+            }
+        }
         
-        // Reset the input value to allow uploading the same file again
-        $(this).val('');
+        // Also refresh clients data in case a new client was auto-created
+        try {
+            const cRes = await fetch(`${API_URL}/clients`);
+            clientsData = await cRes.json();
+            setupClientAutocomplete();
+        } catch(e) {}
+    }
+
+    // 2. Logic for Load from Database button
+    $("#loadFromDbBtn").click(async function() {
+        const qNo = prompt("Enter Quotation Number to load:");
+        if (!qNo) return;
+        try {
+            const res = await fetch(`${API_URL}/quotations/${qNo}`);
+            if (res.ok) {
+                const data = await res.json();
+                
+                // Map DB schema back to expected JSON
+                data.clientName = data.client.name;
+                data.clientMobile = data.client.mobile;
+                data.clientAddress = data.client.address;
+
+                populateFormWithData(data);
+                alert(`Quotation "${data.quotationNo}" loaded!`);
+            } else {
+                alert("Quotation not found.");
+            }
+        } catch (err) {
+            alert("Network error.");
+        }
     });
     
     // === END: FILE BACKUP SCRIPT ===
@@ -584,10 +765,16 @@
       $clone.find('[contenteditable]').attr('contenteditable', 'false');
 
       let clientName = $("#clientName").val().trim() || "Quotation";
+      let quoteNo = $("#quotationNo").val().trim();
+      let pdfFileName = clientName;
+      if (quoteNo) {
+          pdfFileName += " - " + quoteNo;
+      }
+      pdfFileName += ".pdf";
       
       const options = {
         margin: [0.25, 0.25, 0.25, 0.25],
-        filename: clientName + '.pdf',
+        filename: pdfFileName,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
         jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
@@ -597,11 +784,119 @@
       html2pdf().from($clone[0]).set(options).save();
     });
 
+    $("#rateListModeToggle").change(function() {
+        if($(this).is(":checked")) {
+            $("#quotationArea").addClass("rate-list-mode");
+            $("th:contains('Price')").text("Rate / Unit");
+            $("#previewDocTitle").text("Rate List");
+        } else {
+            $("#quotationArea").removeClass("rate-list-mode");
+            $("th:contains('Rate / Unit')").text("Price");
+            $("#previewDocTitle").text("Quotation");
+        }
+    });
+
     // Initial load Actions
+    fetch('http://localhost:3000/api/next-quotation-no')
+      .then(res => res.json())
+      .then(data => {
+          if (!$("#quotationNo").val()) {
+              $("#quotationNo").val(data.nextNo);
+              $("#previewQuotationNo").text(data.nextNo);
+          }
+      })
+      .catch(err => console.error(err));
+
+    // Force plain text paste on all contenteditable elements to retain formatting
+    $(document).on('paste', '[contenteditable]', function(e) {
+        e.preventDefault();
+        const text = (e.originalEvent || e).clipboardData.getData('text/plain');
+        document.execCommand('insertText', false, text);
+    });
+
     calculateTotal();
     $("#updatePreview").click();
 
+    // Global variables for autocomplete and T&C
+    let allProducts = [];
+    let allTerms = [];
+    
+    async function loadBackendData() {
+      try {
+        const pRes = await fetch('http://localhost:3000/api/products');
+        allProducts = await pRes.json();
+        
+        const tRes = await fetch('http://localhost:3000/api/terms');
+        allTerms = await tRes.json();
+        
+        const compRes = await fetch('http://localhost:3000/api/company');
+        const company = await compRes.json();
+        if (company) {
+            $('#previewCompanyName').text(company.name);
+            $('#previewCompanyDetails').text(company.address);
+            $('#previewPhone').text(company.phone);
+            $('#previewEmail').text(company.email);
+            $('#previewCompanyName2').text(company.name);
+            
+            $('#companyName').val(company.name);
+            $('#companyDetails').val(company.address);
+            $('#companyPhone').val(company.phone);
+            $('#companyEmail').val(company.email);
+            
+            if (company.signature) {
+                $('#previewSignature').attr('src', company.signature).show();
+                $('#signatureLine').hide();
+            } else {
+                $('#previewSignature').attr('src', '').hide();
+                $('#signatureLine').show();
+            }
+        }
+        
+        let termsHtml = '';
+        $('#termsInput').empty();
+        allTerms.forEach(t => {
+            // Encode content to pass safely to click handler
+            termsHtml += `<li class="list-group-item list-group-item-action" style="cursor:pointer;" onclick="appendTerm('${encodeURIComponent(t.content)}')">${t.content}</li>`;
+            
+            // Auto-prefill the term in the form
+            $('#termsInput').append(`<textarea class="term form-control mt-2">${t.content}</textarea>`);
+        });
+        $('#savedTermsList').html(termsHtml);
+        
+        // Refresh preview since we just added terms
+        $("#updatePreview").click();
+      } catch (err) {
+        console.error("Failed to fetch backend data", err);
+      }
+    }
+    
+    window.appendTerm = function(encodedContent) {
+        const content = decodeURIComponent(encodedContent);
+        $("#termsInput").append(`<textarea class="term form-control mt-2">${content}</textarea>`);
+        const modalEl = document.getElementById('loadTermModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if(modal) modal.hide();
+    };
+
+    loadBackendData();
   </script>
+
+  <!-- Load Term Modal -->
+  <div class="modal fade no-print" id="loadTermModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Select Saved T&C</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <ul class="list-group" id="savedTermsList">
+            <!-- Terms injected here -->
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
 
 </body>
 
