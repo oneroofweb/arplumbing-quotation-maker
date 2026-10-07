@@ -21,14 +21,14 @@ app.use(express.static(path.join(__dirname)));
 async function setupDefaultUser() {
   const count = await prisma.user.count();
   if (count === 0) {
-    const hashedPassword = await bcrypt.hash('admin123', 10);
+    const hashedPassword = await bcrypt.hash('Athar@#1997', 10);
     await prisma.user.create({
       data: {
         username: 'admin',
         password: hashedPassword
       }
     });
-    console.log('Default user created: admin / admin123');
+    console.log('Default user created: admin / Athar@#1997');
   }
 }
 setupDefaultUser();
