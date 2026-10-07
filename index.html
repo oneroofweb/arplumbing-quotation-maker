@@ -324,7 +324,7 @@
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('quotationDate').value = today;
 
-    const API_URL = 'http://localhost:3000/api';
+    const API_URL = '/api';
     let clientsData = [];
     let productsData = [];
 
@@ -797,7 +797,7 @@
     });
 
     // Initial load Actions
-    fetch('http://localhost:3000/api/next-quotation-no')
+    fetch('/api/next-quotation-no')
       .then(res => res.json())
       .then(data => {
           if (!$("#quotationNo").val()) {
@@ -823,13 +823,13 @@
     
     async function loadBackendData() {
       try {
-        const pRes = await fetch('http://localhost:3000/api/products');
+        const pRes = await fetch('/api/products');
         allProducts = await pRes.json();
         
-        const tRes = await fetch('http://localhost:3000/api/terms');
+        const tRes = await fetch('/api/terms');
         allTerms = await tRes.json();
         
-        const compRes = await fetch('http://localhost:3000/api/company');
+        const compRes = await fetch('/api/company');
         const company = await compRes.json();
         if (company) {
             $('#previewCompanyName').text(company.name);
