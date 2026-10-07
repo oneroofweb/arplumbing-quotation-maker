@@ -81,7 +81,8 @@
                     localStorage.setItem('token', data.token);
                     window.location.href = 'index.html';
                 } else {
-                    $("#errorMsg").text("Invalid username or password.").show();
+                    const data = await res.json().catch(() => ({}));
+                    $("#errorMsg").text(data.error || "Invalid username or password.").show();
                 }
             } catch (err) {
                 $("#errorMsg").text("Network error. Please make sure the server is running.").show();
